@@ -23,3 +23,9 @@ clean_text <- function(text) {
   text <- tokens_tolower(text)
   as.character(text)
 }
+
+
+data_vars <- function(data) {
+  data_names <- names(hdtable(data)$data)
+  data_names
+}

@@ -2,3 +2,5 @@
 
 export(hc_titles)
 export(hg_word_cloud)
+export(hg_word_cloud_Cat)
+export(hg_word_cloud_CatNum)

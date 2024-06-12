@@ -21,7 +21,7 @@ hg_word_cloud <- function(data,
   if (is.null(var_num)) var_num <- "Conteo"
 
   hchart(data_viz, "wordcloud",
-         hcaes_(name = var_cat, weight = var_num), zoomType= 'xy') |>
+         hcaes_(name = var_cat, weight = var_num), name = var_num, zoomType= 'xy') |>
     hc_titles(opts = dsopts_merge(..., categories = "titles")) |>
     hc_colors(data_viz$..colors) |>
     # hc_tooltip(useHTML = TRUE,
@@ -31,3 +31,17 @@ hg_word_cloud <- function(data,
 
 
 }
+
+#' @export
+hg_word_cloud_Cat <- function(data, dic = NULL, clean_text = TRUE, ...) {
+  vars <- data_vars(data)
+  hg_word_cloud(data, dic, var_cat = vars[1], clean_text = clean_text, ...)
+}
+
+#' @export
+hg_word_cloud_CatNum <- function(data, dic = NULL, ...) {
+  vars <- data_vars(data)
+  hg_word_cloud(data, dic, var_cat = vars[1], var_num = vars[2], clean_text = FALSE, ...)
+}
+
+
