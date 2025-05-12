@@ -1,8 +1,13 @@
-#' @export
-hc_titles <- function(hc, ...) {
-  opts <- dsopts_merge(..., categories = "titles")
+#' @keywords internal
+hg_titles <- function(hc, ...) {
+  opts <- dsopts::dsopts_merge(..., categories = "titles")
+
   hc |>
-    hc_title(text = opts$title) |>
-    hc_subtitle(text = opts$subtitle)  |>
-    hc_credits(enabled = opts$caption_show, text = opts$caption)
+    highcharter::hc_title(text = opts$title, useHTML = TRUE) |>
+    highcharter::hc_subtitle(text = opts$subtitle, useHTML = TRUE) |>
+    highcharter::hc_credits(
+      enabled = opts$caption_show,
+      text = opts$caption,
+      useHTML = TRUE
+    )
 }
