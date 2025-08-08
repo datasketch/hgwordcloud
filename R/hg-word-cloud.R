@@ -52,6 +52,7 @@ hg_word_cloud <- function(data, dic = NULL,
 
     data <- data.frame(word = data)
     var_cat <- "word"
+    dic <- NULL
   }
 
   ht <- hdtable::hdtable(data, dic)
@@ -70,4 +71,9 @@ hg_word_cloud <- function(data, dic = NULL,
       formatter = highcharter::JS("function () {return this.point.label;}")
     ) |>
     hg_titles(...)
+}
+
+#' @export
+hg_word_cloud_Cat <- function(data, dic = NULL, ...) {
+  hg_word_cloud(data, dic, var_cat = names(data)[1], ...)
 }
