@@ -1,55 +1,79 @@
+#' Create a word cloud visualization
+#'
+#' @description
+#' Generates a word cloud using highcharter.
+#'
+#' @param data A data frame containing the text data to visualize.
+#' @param dic Optional. A data dictionary for variable mapping and formatting.
+#' @param var_cat Character. The name of the categorical variable containing the
+#' text data.
+#' @param var_num Optional. The name of the numerical variable to use for word
+#' sizing.
+#' @param ... Additional \code{dsopts} arguments passed for customization,
+#' for example:
+#'   \itemize{
+#'     \item \code{title}: Main title of the visualization
+#'     \item \code{subtitle}: Subtitle text
+#'     \item \code{caption}: Caption text
+#'   }
+#'
+#' @return A highcharter object containing the word cloud visualization.
+#'
+#' @examples
+#' \dontrun{
+#' # Basic word cloud from text data
+#' data <- data.frame(text = c("word1", "word2", "word3", "word1"))
+#' hg_word_cloud(data, var_cat = "text")
+#'
+#' # Word cloud with frequency
+#' data <- data.frame(
+#'   text = c("word1", "word2", "word3"),
+#'   freq = c(10, 5, 3)
+#' )
+#' hg_word_cloud(data, var_cat = "text", var_num = "freq")
+#' }
+#'
 #' @export
-hg_word_cloud <- function(data,
-                          dic = NULL,
-                          clean_text = TRUE,
-                          var_cat = NULL,
-                          var_num = NULL, ...) {
+hg_word_cloud <- function(data, dic = NULL,
+                          var_cat  = NULL,
+                          var_num  = NULL,
+                          ...) {
+  if (is.null(data)) stop("Data must be provided.")
+  if (is.null(var_cat)) stop("var_cat must be provided.")
 
+  data <- data |>
+    dplyr::select(dplyr::any_of(var_cat), dplyr::any_of(var_num))
 
-   if (is.null(var_cat)) return(stop("You must indicate the name of the column with text in var_cat"))
-  dic <- NULL
-  opts_theme <-  dsopts_merge(..., categories = "theme")
-   if (clean_text) {
-     data <- data.frame(words = clean_text(data[[var_cat]]))
-     names(data) <- var_cat
-   }
+  if (is.null(var_num)) {
+    data <- data |>
+      dplyr::select(dplyr::all_of(var_cat)) |>
+      purrr::map(function(x) text_prep(x, ...)) |>
+      unlist(use.names = FALSE)
 
-  ht <- hdtable(data, dic)
-  data_viz <- data_prep(ht$data, ht$dic, var_cat, var_num, ...)
-  names(data_viz)[1:2] <- c("word", "frequency")
-  color_by <- "word"
-  data_viz <- colors_data(data_viz, color_by = color_by, ...)
-
-  if (nrow(data_viz) > 500) {
-  data_viz <- data_viz |> dplyr::arrange(desc(frequency))
-  data_viz <- data_viz[1:500,]
+    data <- data.frame(word = data)
+    var_cat <- "word"
+    dic <- NULL
   }
 
-  # data_viz <- data_viz |> rename(label = ..labels)
-  if (is.null(var_num)) var_num <- "Conteo"
+  ht <- hdtable::hdtable(data, dic)
 
-  hchart(data_viz, "wordcloud",
-         hcaes(name = word, weight = frequency), name = var_num, zoomType= 'xy') |>
-    hc_titles(opts = dsopts_merge(..., categories = "titles")) |>
-    hc_colors(data_viz$..colors) |>
-    # hc_tooltip(useHTML = TRUE,
-    #           formatter = JS(paste0("function () {return this.point.label;}"))
-    #           ) |>
-    hc_add_theme(hgch_theme(opts = opts_theme))
+  data_viz <- ht$data |>
+    data_prep(ht$dic, var_cat, var_num, agg_text = "freq", ...) |>
+    dsdatawiz::colors_data(color_by = names(ht$data)[1], ...)
 
-
+  highcharter::highchart() |>
+    highcharter::hc_chart(type = "wordcloud") |>
+    highcharter::hc_add_theme(hg_theme(...)) |>
+    highcharter::hc_colors(data_viz$..colors) |>
+    highcharter::hc_series(process_wordcloud(data_viz)) |>
+    highcharter::hc_tooltip(
+      useHTML = TRUE,
+      formatter = highcharter::JS("function () {return this.point.label;}")
+    ) |>
+    hg_titles(...)
 }
 
 #' @export
-hg_word_cloud_Cat <- function(data, dic = NULL, clean_text = TRUE, ...) {
-  vars <- data_vars(data)
-  hg_word_cloud(data, dic, var_cat = vars[1], clean_text = clean_text, ...)
+hg_word_cloud_Cat <- function(data, dic = NULL, ...) {
+  hg_word_cloud(data, dic, var_cat = names(data)[1], ...)
 }
-
-#' @export
-hg_word_cloud_CatNum <- function(data, dic = NULL, ...) {
-  vars <- data_vars(data)
-  hg_word_cloud(data, dic, var_cat = vars[1], var_num = vars[2], clean_text = FALSE, ...)
-}
-
-
